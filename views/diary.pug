@@ -1,0 +1,24 @@
+extends layout
+
+block content
+  h1= title
+  h2= subtitle
+  div(id='diaryGraph')
+  script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js')
+  script(src='https://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js')    
+  script.
+    new Morris.Line({
+    // ID of the element in which to draw the chart.
+    element: 'diaryGraph',
+    // Chart data records -- each entry in this array corresponds to a point on
+    // the chart.
+    data: !{JSON.stringify(diaryData)},
+    // The name of the data record attribute that contains x-values.
+    xkey: 'LogDate',
+    // A list of names of data record attributes that contain y-values.
+    ykeys: ['Value', 'Slow', 'Fast', 'Calories'],
+    // Labels for the ykeys -- will be displayed when you hover over the
+    // chart.
+    labels: ['Diary', 'Slow terapy', 'Fast terapy', 'Calories']
+    });
