@@ -74,18 +74,24 @@ function getValuesForRequest(req, res, next, from, to) {
     }
     return getValues(req.params.diaryName, req.params.format, from, to).then((data) => {
         return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["values"] + " (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    }).catch((err) => {        
+        return res.status(500).send(err.message);
     });
 }
 
 function getTerapiesForRequest(req, res, next, from, to) {
     return getTerapies(req.params.diaryName, from, to).then((data) => {
         return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["terapies"], diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    }).catch((err) => {        
+        return res.status(500).send(err.message);
     });
 }
 
 function getCaloriesForRequest(req, res, next, from, to){
     return getCalories(req.params.diaryName, from, to).then((data) => {
         return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["calories"], diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    }).catch((err) => {        
+        return res.status(500).send(err.message);
     });
 }
 
@@ -111,6 +117,8 @@ function allForAPeriod(req, res, next, from, to){
             return merge(fastTerapies, data);
         }).then((c) => { 
             return res.render('diary', { title: req.params.diaryName, subtitle: "all (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+        }).catch((err) => {        
+            return res.status(500).send(err.message);
         });
         
         function merge(fromArray, toArray){

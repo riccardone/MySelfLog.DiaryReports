@@ -1,3 +1,4 @@
+require('dotenv').config()
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -6,7 +7,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
-var users = require('./routes/users');
+var api = require('./routes/api');
 var diary = require('./routes/diary');
 
 var app = express();
@@ -26,7 +27,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/diary', diary);
-app.use('/users', users);
+app.use('/api/v1', api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -46,10 +47,9 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-//module.exports = app;
-
-var server = app.listen(3005, 'localhost', function () {
+var server = app.listen(process.env.App_Port, process.env.App_Host, function () {
   var address = server.address().address + ":" + server.address().port;  
   console.log("App started on on %s", address)  
 });
+
 module.exports = server;
