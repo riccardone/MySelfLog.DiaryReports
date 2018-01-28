@@ -8,7 +8,9 @@ var titleMaps = {};
 var formatMaps = {};
 
 function initMaps() {
-    titleMaps["Blood-Sugar"] = "Glucose Levels";
+    titleMaps["values"] = "Glucose Levels";
+    titleMaps["terapies"] = "Terapies";
+    titleMaps["calories"] = "Calories";
     formatMaps["mmol"] = "mmol/L";
     formatMaps["mgdl"] = "mg/dL";
 }
@@ -16,88 +18,189 @@ function initMaps() {
 initMaps();
 
 router.get('/:diaryName/values/:format', function (req, res, next) {
-    if (!formatMaps[req.params.format]) {
-        return res.status(400).send("As format you can only use 'mmol' or 'mgdl'");
+    var from = moment().startOf('day');
+    var to = moment().endOf('day');
+    return getValuesForRequest(req, res, next, from, to);
+});
+
+router.get('/:diaryName/values/:format/from/:from/to/:to', function (req, res, next) {
+    var from = moment(req.params.from);
+    var to = moment(req.params.to);
+    if (!from.isValid() || !to.isValid()) {
+        return res.status(400).send("You must use the ISO date format to specify date (example: 2015-12-30)");
     }
-    return getValues(req.params.diaryName).then((res) => {
-        return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps[req.params.logType] + " (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data });
-    });
+    return getValuesForRequest(req, res, next, from, to);
 });
 
 router.get('/:diaryName/terapies', function (req, res, next) {
-    return getTerapies(req.params.diaryName).then((res) => {
-        return res.render('diary', { title: req.params.diaryName, subtitle: req.params.logType, diaryName: req.params.diaryName, diaryData: data });
-    });
+    var from = moment().startOf('day');
+    var to = moment().endOf('day');
+    return getTerapiesForRequest(req, res, next, from, to);
+});
+
+router.get('/:diaryName/terapies/from/:from/to/:to', function (req, res, next) {
+    var from = moment(req.params.from);
+    var to = moment(req.params.to);
+    if (!from.isValid() || !to.isValid()) {
+        return res.status(400).send("You must use the ISO date format to specify date (example: 2015-12-30)");
+    }
+    return getTerapiesForRequest(req, res, next, from, to);
 });
 
 router.get('/:diaryName/calories', function (req, res, next) {
-    return getCalories(req.params.diaryName).then((res) => {
-        return res.render('diary', { title: req.params.diaryName, subtitle: req.params.logType, diaryName: req.params.diaryName, diaryData: data });
-    });
+    var from = moment().startOf('day');
+    var to = moment().endOf('day');   
+    return getCaloriesForRequest(req, res, next, from, to);
+});
+
+router.get('/:diaryName/calories/from/:from/to/:to', function (req, res, next) {
+    var from = moment(req.params.from);
+    var to = moment(req.params.to);
+    if (!from.isValid() || !to.isValid()) {
+        return res.status(400).send("You must use the ISO date format to specify date (example: 2015-12-30)");
+    }
+    return getCaloriesForRequest(req, res, next, from, to);
 });
 
 router.get('/:diaryName/all/:format', function (req, res, next) {
-    return res.status(500).send("TODO");
+    var from = moment().startOf('day');
+    var to = moment().endOf('day');
+    return allForAPeriod(req, res, next, from, to);
+});
+
+function getValuesForRequest(req, res, next, from, to) {    
     if (!formatMaps[req.params.format]) {
         return res.status(400).send("As format you can only use 'mmol' or 'mgdl'");
     }
-    var allData = [];
-    return getValues(req.params.diaryName, req.params.format)
+    return getValues(req.params.diaryName, req.params.format, from, to).then((data) => {
+        return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["values"] + " (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    });
+}
+
+function getTerapiesForRequest(req, res, next, from, to) {
+    return getTerapies(req.params.diaryName, from, to).then((data) => {
+        return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["terapies"], diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    });
+}
+
+function getCaloriesForRequest(req, res, next, from, to){
+    return getCalories(req.params.diaryName, from, to).then((data) => {
+        return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["calories"], diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+    });
+}
+
+function allForAPeriod(req, res, next, from, to){    
+    if (!formatMaps[req.params.format]) {
+        return res.status(400).send("As format you can only use 'mmol' or 'mgdl'");
+    }
+    var data = [];
+    return getValues(req.params.diaryName, req.params.format, from, to)
         .then((values) => {
-            return allData["Value"] = values;
-        })
-        .then((a) => {
-            return getCalories(req.params.diaryName);
-        })
-        .then((calories) => {
-            return allData["Calories"] = calories;
-        })
-        .then((b) => {
-            return getTerapies(req.params.diaryName);
-        })
-        .then((terapies) => {
-            return allData["Terapies"] = terapies;
+            return merge(values, data);
+        }).then((a) => {
+            return getCalories(req.params.diaryName, from, to);
+        }).then((calories) => {
+            return merge(calories, data);
+        }).then((b) => {
+            return getSlowTerapies(req.params.diaryName, from, to);
+        }).then((slowTerapies) => {
+            return merge(slowTerapies, data);
         }).then((c) => {
-            // TODO fix the alldata structure to show multiple lines in the chart
-            return res.render('diary', { title: req.params.diaryName, subtitle: "all (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: allData });
+            return getFastTerapies(req.params.diaryName, from, to);
+        }).then((fastTerapies) => {            
+            return merge(fastTerapies, data);
+        }).then((c) => { 
+            return res.render('diary', { title: req.params.diaryName, subtitle: "all (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
         });
-});
+        
+        function merge(fromArray, toArray){
+            fromArray.forEach(element => {
+                toArray.push(element);
+            });
+            return toArray;
+        }
+}
 
-function getCalories(diaryName) {
-    return repo.getData(diaryName, "Food").then((getDataResponse) => {
+function getPeriodText(from, to){            
+    if(from.isSame(to, 'd')){
+        return "Day: " + from.format('DD-MM-YYYY');
+    }else{
+        return "From: " + from.format('DD-MM-YYYY') + ' To: ' + to.format('DD-MM-YYYY');
+    }  
+}
+
+function getCalories(diaryName, from, to) {
+    return repo.getData(diaryName, 'Calories', from, to).then((getDataResponse) => {
         var data = [];
         getDataResponse.forEach(element => {
             data.push({
-                Value: element.Calories, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+                Calories: element.Calories, Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
             });
         });
         return data;
     });
 }
 
-function getTerapies(diaryName) {
-    return repo.getData(diaryName, "Terapy").then((getDataResponse) => {
-        var data = [];
-        getDataResponse.forEach(element => {
+function getTerapies(diaryName, from, to) {
+    var data = [];
+    return repo.getData(diaryName, 'Slow-Terapy', from, to).then((slowTerapies) => {        
+        slowTerapies.forEach(element => {            
             data.push({
-                Value: element.Value, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+                Slow: element.SlowTerapy, Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+            });
+        });
+        return data;
+    }).then(() => {
+        return repo.getData(diaryName, 'Fast-Terapy', from, to);
+    }).then((fastTerapies) => {
+        fastTerapies.forEach(element => {            
+            data.push({
+                Fast: element.FastTerapy, Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
             });
         });
         return data;
     });
 }
 
-function getValues(diaryName, format) {
-    return repo.getData(diaryName, "Blood-Sugar").then((getDataResponse) => {
+function getSlowTerapies(diaryName, from, to) {
+    return repo.getData(diaryName, 'Slow-Terapy', from, to).then((getDataResponse) => {
+        var data = [];
+        getDataResponse.forEach(element => {            
+            data.push({
+                Slow: element.SlowTerapy, Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+            });
+        });
+        return data;
+    });
+}
+
+function getFastTerapies(diaryName, from, to) {
+    return repo.getData(diaryName, 'Fast-Terapy', from, to).then((getDataResponse) => {
+        var data = [];
+        getDataResponse.forEach(element => {            
+            data.push({
+                Fast: element.FastTerapy, Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+            });
+        });
+        return data;
+    });
+}
+
+function getValues(diaryName, format, from, to) {
+    return repo.getData(diaryName, "Blood-Sugar", from, to).then((getDataResponse) => {
         var data = [];
         getDataResponse.forEach(element => {
             data.push({
-                Value:
-                    (format == 'mmol' && element.Mmolvalue) ||
-                    (format == 'mgdl' && element.Value),
-                LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
+                Value: getValue(element), Message: element.Message, LogDate: moment(element.LogDate).format('YYYY-MM-DD HH:mm:ss')
             });
         });
+        function getValue(el) {
+            if (format === 'mmol') {
+                return el.Mmolvalue;
+            } else {
+                return el.Value;
+            }
+        }
         return data;
     });
 }
