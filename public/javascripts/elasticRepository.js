@@ -21,15 +21,15 @@ function ping() {
   });
 }
 
-function search(correlationId, logType) {
+function search(correlationId, logType, from, to) {
   return client.search({
     index: 'diary-logs',
-    type: 'diaryLog',
-    q: 'CorrelationId: "' + correlationId + '" AND LogType: "' + logType + '"'
+    type: 'diaryLog',    
+    q: 'CorrelationId: "' + correlationId + '" AND LogType: "' + logType + '" AND LogDate: ["' + from.toISOString() + '" TO "' + to.toISOString() + '"]'
   });
 }
 
-function getData(diaryName, logType) {
+function getData(diaryName, logType, from, to) {
   return client.search({
     index: 'diary-events',
     type: 'diaryEvent',
@@ -37,7 +37,7 @@ function getData(diaryName, logType) {
   }).then((diaryEventResponse) => {
     // TODO check if is an error or if there are hits before do that
     var correlationId = diaryEventResponse.hits.hits[0]._source.Id;
-    return search(correlationId, logType);
+    return search(correlationId, logType, from, to);
   }).then((diaryLogResponse) => {
     var results = [];
     diaryLogResponse.hits.hits.forEach(element => {
@@ -52,8 +52,7 @@ function getData(diaryName, logType) {
         "LogType": element._source.LogType,
         "LogDate": element._source.LogDate,
         "Source": element._source.Source,
-        "CorrelationId": element._source.CorrelationId,
-        "message": element._source.message
+        "CorrelationId": element._source.CorrelationId        
       });
     });
     return results;
