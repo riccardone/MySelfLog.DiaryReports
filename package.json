@@ -1,6 +1,6 @@
 {
-  "name": "myappname",
-  "version": "0.0.0",
+  "name": "myselflog-reports",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "start": "node ./app.js"
@@ -9,6 +9,7 @@
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
+    "dotenv": "^4.0.0",
     "elasticsearch": "^14.0.0",
     "express": "~4.15.5",
     "moment": "^2.20.1",
