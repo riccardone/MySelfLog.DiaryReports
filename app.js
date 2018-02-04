@@ -12,6 +12,10 @@ var diary = require('./routes/diary');
 
 var app = express();
 
+app.get('/health', function (req, res) {
+  res.send('ok');
+});
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
