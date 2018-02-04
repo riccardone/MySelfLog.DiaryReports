@@ -62,6 +62,12 @@ router.get('/:diaryName/calories/from/:from/to/:to', function (req, res, next) {
     return getCaloriesForRequest(req, res, next, from, to);
 });
 
+router.get('/:diaryName/all/:format/from/:from/to/:to', function (req, res, next) {
+    var from = moment(req.params.from);
+    var to = moment(req.params.to);
+    return allForAPeriod(req, res, next, from, to);
+});
+
 router.get('/:diaryName/all/:format', function (req, res, next) {
     var from = moment().startOf('day');
     var to = moment().endOf('day');
