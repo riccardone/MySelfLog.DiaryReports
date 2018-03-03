@@ -5,7 +5,7 @@ var client = new elasticsearch.Client({
 });
 
 function ElasticRepository() {
-  
+
 }
 
 function ping() {
@@ -24,7 +24,7 @@ function ping() {
 function search(correlationId, logType, from, to) {
   return client.search({
     index: 'diary-logs',
-    type: 'diaryLog',    
+    type: 'diaryLog',
     q: 'CorrelationId: "' + correlationId + '" AND LogType: "' + logType + '" AND LogDate: ["' + from.toISOString() + '" TO "' + to.toISOString() + '"]'
   });
 }
@@ -36,6 +36,9 @@ function getData(diaryName, logType, from, to) {
     q: 'DiaryName: "' + diaryName + '"'
   }).then((diaryEventResponse) => {
     // TODO check if is an error or if there are hits before do that
+    if (diaryEventResponse.hits.total === 0) {
+      throw { message: "Diary '" + diaryName + "' not found" }
+    }
     var correlationId = diaryEventResponse.hits.hits[0]._source.Id;
     return search(correlationId, logType, from, to);
   }).then((diaryLogResponse) => {
@@ -52,7 +55,7 @@ function getData(diaryName, logType, from, to) {
         "LogType": element._source.LogType,
         "LogDate": element._source.LogDate,
         "Source": element._source.Source,
-        "CorrelationId": element._source.CorrelationId        
+        "CorrelationId": element._source.CorrelationId
       });
     });
     return results;
