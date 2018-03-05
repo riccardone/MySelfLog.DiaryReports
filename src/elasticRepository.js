@@ -1,7 +1,6 @@
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
-  host: process.env.Elastic_Host,
-  log: 'trace'
+  host: process.env.Elastic_Host  
 });
 
 function ElasticRepository() {
@@ -25,6 +24,7 @@ function search(correlationId, logType, from, to) {
   return client.search({
     index: 'diary-logs',
     type: 'diaryLog',
+    size: 10000,
     q: 'CorrelationId: "' + correlationId + '" AND LogType: "' + logType + '" AND LogDate: ["' + from.toISOString() + '" TO "' + to.toISOString() + '"]'
   });
 }
@@ -33,6 +33,7 @@ function getData(diaryName, logType, from, to) {
   return client.search({
     index: 'diary-events',
     type: 'diaryEvent',
+    size: 10000,
     q: 'DiaryName: "' + diaryName + '"'
   }).then((diaryEventResponse) => {
     // TODO check if is an error or if there are hits before do that
