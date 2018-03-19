@@ -19,7 +19,7 @@ module.exports = function (diaryRepository) {
 
     router.get('/:diaryName/values/:format', function (req, res, next) {
         var from = moment().startOf('day');
-        var to = moment().endOf('day');
+        var to = moment().endOf('day');        
         return getValuesForRequest(req, res, next, from, to);
     });
 
@@ -28,12 +28,12 @@ module.exports = function (diaryRepository) {
             return res.status(400).send("From Date must be before To Date");
         }
         var from = moment(req.params.from);
-        var to = moment(req.params.to);                
+        var to = moment(req.params.to);
         if (!from.isValid() || !to.isValid()) {
             return res.status(400).send("You must use the ISO date format to specify date (example: 2015-12-30)");
         }
         return getValuesForRequest(req, res, next, from, to);
-    });    
+    });
 
     router.get('/:diaryName/terapies', function (req, res, next) {
         var from = moment().startOf('day');
@@ -46,7 +46,7 @@ module.exports = function (diaryRepository) {
             return res.status(400).send("From Date must be before To Date");
         }
         var from = moment(req.params.from);
-        var to = moment(req.params.to);        
+        var to = moment(req.params.to);
         if (!from.isValid() || !to.isValid()) {
             return res.status(400).send("You must use the ISO date format to specify date (example: 2015-12-30)");
         }
@@ -86,12 +86,14 @@ module.exports = function (diaryRepository) {
         return allForAPeriod(req, res, next, from, to);
     });
 
+    var _prefixTitle = "Diary: ";
+
     function getValuesForRequest(req, res, next, from, to) {
         if (!formatMaps[req.params.format]) {
             return res.status(400).send("As format you can only use 'mmol' or 'mgdl'");
         }
         return getValues(req.params.diaryName, req.params.format, from, to).then((data) => {
-            return res.render('diary', { title: req.params.diaryName, subtitle: titleMaps["values"] + " (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+            return res.render('diary', { title: _prefixTitle + req.params.diaryName, subtitle: titleMaps["values"] + " (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
         }).catch((err) => {
             return res.status(500).send(err.message);
         });
@@ -149,7 +151,8 @@ module.exports = function (diaryRepository) {
 
     function getPeriodText(from, to) {
         if (from.isSame(to, 'd')) {
-            return "Day: " + from.format('DD-MM-YYYY');
+            //return "Day: " + from.format('DD-MM-YYYY');
+            return from.format('DD-MM-YYYY');
         } else {
             return "From: " + from.format('DD-MM-YYYY') + ' To: ' + to.format('DD-MM-YYYY');
         }
