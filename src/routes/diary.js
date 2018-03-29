@@ -19,7 +19,7 @@ module.exports = function (diaryRepository) {
 
     router.get('/:diaryName/values/:format', function (req, res, next) {
         var from = moment().startOf('day');
-        var to = moment().endOf('day');        
+        var to = moment().endOf('day');
         return getValuesForRequest(req, res, next, from, to);
     });
 
@@ -136,10 +136,43 @@ module.exports = function (diaryRepository) {
             }).then((fastTerapies) => {
                 return merge(fastTerapies, data);
             }).then((c) => {
-                return res.render('diary', { title: req.params.diaryName, subtitle: "all (" + formatMaps[req.params.format] + ")", diaryName: req.params.diaryName, diaryData: data, period: getPeriodText(from, to) });
+                var stats = aggregateStats(data);                
+                return stats;
+            }).then((c) => {
+                return res.render('diary', { 
+                    title: req.params.diaryName, 
+                    subtitle: "all (" + formatMaps[req.params.format] + ")", 
+                    diaryName: req.params.diaryName, 
+                    diaryData: data, 
+                    period: getPeriodText(from, to), 
+                    average: c.average > 0 ? 'Average Glucose Level: ' + c.average : '',
+                    calories: c.calories > 0 ? 'Total calories: ' + c.calories : '',
+                    fastTerapyTotal: c.fast > 0 ? 'Fast terapy: ' + c.fast : ''
+                });
             }).catch((err) => {
                 return res.status(500).send(err.message);
             });
+
+        function aggregateStats(data) {
+            var sum = 0;            
+            var countValues = 0; 
+            var totalCalories = 0;
+            var totalFastTerapy = 0;
+            for (var i = 0; i < data.length; i++) {
+                if (data[i].Value) {
+                    sum += parseInt(data[i].Value, 10); 
+                    countValues++;
+                }    
+                if (data[i].Calories) {
+                    totalCalories += data[i].Calories;                    
+                }
+                if (data[i].Fast) {
+                    totalFastTerapy += data[i].Fast;                    
+                }           
+            }
+            var avg = sum / countValues;            
+            return { average: isNaN(avg) === false ? Math.round(avg * 100) / 100 : 0, calories: totalCalories, fast: totalFastTerapy };
+        }
 
         function merge(fromArray, toArray) {
             fromArray.forEach(element => {
