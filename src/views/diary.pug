@@ -1,14 +1,15 @@
 extends layout
 
 block content
-  div(class="container")
-    div(class="row")
-      //- div(class="col")
-      //-   h1= title        
-      //-   h2= subtitle
-      //- div(class="col")
-      //-   h2= period
+  div(class="container")          
   div(id='diaryGraph')
+  br
+  br
+  div(class="row")
+      div(class="col")        
+        h5= average
+        h5= calories
+        h5= fastTerapyTotal      
   script(src='https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js')
   script(src='https://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js')
   script(src='https://cdnjs.cloudflare.com/ajax/libs/morris.js/0.5.1/morris.min.js')    
