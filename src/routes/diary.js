@@ -145,7 +145,7 @@ module.exports = function (diaryRepository) {
                     diaryName: req.params.diaryName, 
                     diaryData: data, 
                     period: getPeriodText(from, to), 
-                    average: isNaN(c.average) === false ? 'Average Glucose Level: ' + c.average : '',
+                    average: c.average > 0 ? 'Average Glucose Level: ' + c.average : '',
                     calories: c.calories > 0 ? 'Total calories: ' + c.calories : '',
                     fastTerapyTotal: c.fast > 0 ? 'Fast terapy: ' + c.fast : ''
                 });
@@ -160,7 +160,7 @@ module.exports = function (diaryRepository) {
             var totalFastTerapy = 0;
             for (var i = 0; i < data.length; i++) {
                 if (data[i].Value) {
-                    sum += parseInt(data[i].Value, 10); //don't forget to add the base
+                    sum += parseInt(data[i].Value, 10); 
                     countValues++;
                 }    
                 if (data[i].Calories) {
@@ -170,8 +170,8 @@ module.exports = function (diaryRepository) {
                     totalFastTerapy += data[i].Fast;                    
                 }           
             }
-            var avg = sum / countValues;
-            return { average: avg, calories: totalCalories, fast: totalFastTerapy };
+            var avg = sum / countValues;            
+            return { average: isNaN(avg) === false ? Math.round(avg * 100) / 100 : 0, calories: totalCalories, fast: totalFastTerapy };
         }
 
         function merge(fromArray, toArray) {
